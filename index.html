@@ -103,6 +103,7 @@
   .phase-Peak{background:rgba(255,61,90,.15);color:var(--phase-peak)}
   .phase-Taper{background:rgba(212,255,0,.15);color:var(--phase-taper)}
   .phase-Cutback{background:rgba(136,136,136,.15);color:var(--text-muted)}
+  .phase-Travel{background:rgba(0,184,255,.18);color:var(--info);border:1px solid rgba(0,184,255,.3)}
   .phase-Race{background:var(--accent);color:#000}
   .week-volume{font-family:var(--font-mono);font-weight:700;font-size:14px;color:var(--text)}
   .week-volume .unit{color:var(--text-muted);font-weight:400}
@@ -239,18 +240,72 @@
   .race-card .label{font-family:var(--font-mono);font-size:11px;color:var(--accent);letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px}
   .race-card .title{font-family:var(--font-display);font-weight:900;font-size:32px;text-transform:uppercase;letter-spacing:.02em;margin-bottom:4px}
   .race-card .date{font-family:var(--font-mono);font-size:14px;color:var(--text-muted)}
+
+  /* SYNC */
+  .sync-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:4px;font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.02em;border:1px solid var(--border);background:var(--surface);cursor:pointer;transition:all .15s}
+  .sync-badge:hover{border-color:var(--border-strong)}
+  .sync-badge .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+  .sync-badge.idle{color:var(--text-muted)}
+  .sync-badge.idle .dot{background:var(--text-dim)}
+  .sync-badge.synced{color:var(--success);border-color:rgba(0,217,126,.3)}
+  .sync-badge.synced .dot{background:var(--success)}
+  .sync-badge.syncing{color:var(--info);border-color:rgba(0,184,255,.3)}
+  .sync-badge.syncing .dot{background:var(--info);animation:pulse 1s ease-in-out infinite}
+  .sync-badge.error{color:var(--danger);border-color:rgba(255,61,90,.3)}
+  .sync-badge.error .dot{background:var(--danger)}
+  .sync-badge.offline{color:var(--warning);border-color:rgba(255,176,32,.3)}
+  .sync-badge.offline .dot{background:var(--warning)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  .settings-section{border:1px solid var(--border);border-radius:4px;padding:16px;margin-bottom:14px;background:var(--bg-elev)}
+  .settings-section h4{font-family:var(--font-display);font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;color:var(--text)}
+  .settings-help{font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:12px}
+  .settings-help code{background:var(--bg);padding:2px 6px;border-radius:2px;font-family:var(--font-mono);font-size:11px;color:var(--accent)}
+  .sync-row-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .sync-status-line{font-family:var(--font-mono);font-size:11px;color:var(--text-muted);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+  .sync-status-line .ok{color:var(--success)}
+  .sync-status-line .err{color:var(--danger)}
+  .step-list{counter-reset:step;padding:0;list-style:none;margin:0}
+  .step-list li{counter-increment:step;padding:6px 0 6px 28px;position:relative;font-size:12px;color:var(--text-muted);line-height:1.6}
+  .step-list li::before{content:counter(step);position:absolute;left:0;top:6px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#000;font-family:var(--font-mono);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .step-list li code{background:var(--bg);padding:1px 5px;border-radius:2px;font-family:var(--font-mono);font-size:11px;color:var(--accent)}
+
+  /* LOADING OVERLAY */
+  .boot-overlay{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:24px;padding:32px;text-align:center}
+  .boot-overlay.hidden{display:none}
+  .boot-spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .boot-title{font-family:var(--font-display);font-weight:900;font-size:28px;letter-spacing:.04em;text-transform:uppercase;color:var(--text)}
+  .boot-msg{font-family:var(--font-mono);font-size:13px;color:var(--text-muted);max-width:480px;line-height:1.6}
+  .boot-error{color:var(--danger);font-family:var(--font-mono);font-size:12px;background:rgba(255,61,90,.08);border:1px solid rgba(255,61,90,.3);border-radius:4px;padding:12px 16px;max-width:520px;text-align:left}
+  .boot-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  #sync-url-display.not-set{color:var(--danger)}
 </style>
 </head>
 <body>
+
+<div class="boot-overlay" id="boot-overlay">
+  <div class="boot-spinner" id="boot-spinner"></div>
+  <div>
+    <div class="boot-title">Road to the MCG</div>
+    <div class="boot-msg" id="boot-msg" style="margin-top:6px">Loading from Google Sheets…</div>
+  </div>
+  <div class="boot-error" id="boot-error" style="display:none"></div>
+  <div class="boot-actions" id="boot-actions" style="display:none">
+    <button class="btn" onclick="bootstrap()">↻ Retry</button>
+    <button class="btn btn-primary" onclick="seedAndContinue()">Seed empty sheet with pre-plan history</button>
+  </div>
+</div>
 
 <header>
   <div class="container brand">
     <div class="brand-left">
       <span class="brand-logo">42.2</span>
       <span class="brand-title">Road to the MCG</span>
-      <span class="brand-sub">· Adaptive 18-Week Plan</span>
+      <span class="brand-sub">· Adaptive 17-Week Plan · Knee-Conscious Build</span>
     </div>
     <div class="header-actions">
+      <button class="sync-badge idle" id="sync-badge" onclick="openSettingsModal()" title="Sync settings"><span class="dot"></span><span id="sync-text">Not connected</span></button>
       <button class="btn btn-ghost btn-sm" onclick="exportCsv()">⬇ CSV</button>
       <button class="btn btn-ghost btn-sm" onclick="resetData()">⟲ Reset</button>
       <button class="btn btn-primary btn-sm" onclick="openLogModal()">+ Log run</button>
@@ -355,6 +410,23 @@
       </div>
     </div>
     <div class="form-card">
+      <div class="form-title">USA Holiday Strategy (W9–W12)</div>
+      <div class="info-callout"><strong>The trade-off:</strong> 3 weeks of build phase happen during the trip. Rather than fight it, we banked extra distance in W5–W7 (long run to 16 km pre-departure) and treat the holiday as a maintenance block.</div>
+      <div class="info-callout"><strong>2 runs per week minimum, more if you can.</strong> 1 mid-week 6–8 km + 1 weekend 10–12 km is the target. Hotel gym treadmills count. A run in a new city is one of the best ways to see it on foot.</div>
+      <div class="info-callout"><strong>Hold the long run at 10–12 km.</strong> Maintenance, not progression. Don't try to do a 16 km long run in unfamiliar heat — that's how injuries happen mid-trip.</div>
+      <div class="info-callout"><strong>Heat awareness.</strong> US summer in August will likely be hotter than Melbourne winter. Slow easy pace by 30–45 s/km. Hydrate aggressively. Run early morning if possible.</div>
+      <div class="info-callout"><strong>Post-holiday compression.</strong> W13–W15 is a compressed peak (+5 km long run per week). That's at the edge of safe — if the knee complains in W13, repeat the week instead of progressing.</div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-title">Knee Pain Protocol</div>
+      <div class="info-callout"><strong>Red flags — stop running and see a physio:</strong> sharp localised pain, swelling, instability, pain going down stairs, pain that lingers more than 24 hours after a run, or pain that gets worse during a run.</div>
+      <div class="info-callout"><strong>Yellow flags — modify but continue:</strong> mild ache during the first km that fades, stiffness in the morning that resolves with movement, dull background awareness. Add walk breaks. Shorten the run. Run on softer surfaces.</div>
+      <div class="info-callout"><strong>Cross-training while the knee settles:</strong> cycling, swimming, elliptical, and rowing are zero-impact ways to keep aerobic fitness. 30–45 min at conversational effort 2–3× per week alongside the run plan.</div>
+      <div class="info-callout"><strong>Strength work that helps:</strong> single-leg glute bridges, side-lying clams, step-downs, wall sits, calf raises. 2× per week, 2–3 sets of 10–15 reps. Most runner-knee pain is a glute/hip strength deficit dressed up as a knee problem.</div>
+      <div class="info-callout"><strong>The W4 / W8 checkpoints matter.</strong> The plan has built-in cutback weeks where you reassess. Pain-free → build. Still sore → repeat the prior phase. Don't fight the calendar.</div>
+    </div>
+    <div class="form-card">
       <div class="form-title">Race-Day Strategy</div>
       <div class="info-callout"><strong>Don't go out fast.</strong> The first 5 km should feel embarrassingly easy at 7:30–7:45/km. Congestion near the start helps — let it slow you.</div>
       <div class="info-callout"><strong>Fuel every 30–40 min.</strong> Practice gels on long runs from W6 onwards. Target ~60–90 g carbs/hr. Water at every station, electrolyte every second one.</div>
@@ -395,6 +467,46 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-title">Google Sheets Sync</div>
+
+    <div class="settings-section">
+      <h4>Backend Configuration</h4>
+      <div class="settings-help">
+        The Sheets URL is <strong style="color:var(--text)">hardcoded</strong> in this HTML file. Edit the <code>SHEETS_URL</code> constant near the top of the <code>&lt;script&gt;</code> section to change it.
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:10px 12px;font-family:var(--font-mono);font-size:11px;color:var(--accent);word-break:break-all" id="sync-url-display">—</div>
+      <div class="sync-row-buttons">
+        <button class="btn btn-sm" onclick="testConnection()">Test connection</button>
+      </div>
+      <div class="sync-status-line" id="sync-status-detail">—</div>
+    </div>
+
+    <div class="settings-section">
+      <h4>Manual Sync</h4>
+      <div class="settings-help">
+        Every change auto-pushes to Sheets immediately. Use these only if you suspect drift or want to force a refresh from Sheets after editing the sheet directly.
+      </div>
+      <div class="sync-row-buttons">
+        <button class="btn btn-sm" onclick="manualSync()">⟳ Push local → Sheets</button>
+        <button class="btn btn-sm" onclick="pullFromSheets(true)">↓ Pull Sheets → local</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h4>Initial Setup</h4>
+      <div class="settings-help">
+        First time? Create a Google Sheet, open <code>Extensions → Apps Script</code>, paste the Apps Script code provided alongside this file, then <code>Deploy → New deployment</code> → Web app · Execute as Me · Anyone access. Copy the <code>/exec</code> URL and paste it into the <code>SHEETS_URL</code> constant near the top of this HTML file's <code>&lt;script&gt;</code> block.
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="closeSettingsModal()">Done</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -402,104 +514,111 @@
    CONFIG
    ═════════════════════════════════════════════════════════════ */
 const RACE_DATE = '2026-10-11';
-const PLAN_START = '2026-06-08';
+const PLAN_START = '2026-06-15';
 const GOAL_PACE_SEC = 7 * 60 + 30;        // 7:30/km
 const GOAL_MARATHON_SEC = 5*3600 + 16*60 + 28;
+
+// ━━━ HARDCODED GOOGLE SHEETS BACKEND ━━━━━━━━━━━━━━━━━━━━━━━━━
+// Paste your Apps Script /exec URL between the quotes below.
+// Single source of truth — no localStorage cache. Edit this once.
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyj2anR3P4Ag-R4BmhxsJ6BKTliRMtsEbbJ-2he6TaNvJIkAOWxI_ooPFgIyK2J8FgEVA/exec';
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 /* ═════════════════════════════════════════════════════════════
    18-WEEK PLAN — BASE TARGETS
    ═════════════════════════════════════════════════════════════ */
 const PLAN = [
-  { week:1, phase:'Base', notes:'Settle into a 3-run rhythm. Keep effort genuinely easy.', sessions:[
-    {day:'Tue', date:'2026-06-09', type:'E', km:6,  basePace:'7:30–8:00', note:'Conversational, nose-breathing'},
-    {day:'Thu', date:'2026-06-11', type:'E', km:7,  basePace:'7:30–8:00', note:'Steady aerobic'},
-    {day:'Sun', date:'2026-06-14', type:'L', km:12, basePace:'7:30–8:00', note:'First long run — control the pace early'}
+  // Phase 1: RELOAD — gentle reintroduction with knee tolerance in mind
+  { week:1, phase:'Base', notes:'Reload week. Knee comes first — if it hurts during a run, stop and walk.', sessions:[
+    {day:'Tue', date:'2026-06-16', type:'E', km:4, basePace:'7:30–8:30', note:'Very gentle. Walk breaks are fine.'},
+    {day:'Thu', date:'2026-06-18', type:'E', km:5, basePace:'7:30–8:30', note:'Soft surface preferred (grass/trail) if available'},
+    {day:'Sun', date:'2026-06-21', type:'L', km:6, basePace:'7:30–8:30', note:'Slow. The only goal is no knee pain after.'}
   ]},
-  { week:2, phase:'Base', notes:'Small bump in long run.', sessions:[
-    {day:'Tue', date:'2026-06-16', type:'E', km:6,  basePace:'7:30–8:00'},
-    {day:'Thu', date:'2026-06-18', type:'E', km:7,  basePace:'7:30–8:00'},
-    {day:'Sun', date:'2026-06-21', type:'L', km:14, basePace:'7:30–8:00', note:'Easy effort throughout'}
+  { week:2, phase:'Base', notes:'Small bump only if W1 was knee-pain-free. If knee flared, repeat W1.', sessions:[
+    {day:'Tue', date:'2026-06-23', type:'E', km:5, basePace:'7:30–8:30'},
+    {day:'Thu', date:'2026-06-25', type:'E', km:5, basePace:'7:30–8:30'},
+    {day:'Sun', date:'2026-06-28', type:'L', km:7, basePace:'7:30–8:30', note:'Stay easy. Walk through any twinges.'}
   ]},
-  { week:3, phase:'Base', notes:'Highest volume yet — keep it easy.', sessions:[
-    {day:'Tue', date:'2026-06-23', type:'E', km:6,  basePace:'7:30–8:00'},
-    {day:'Thu', date:'2026-06-25', type:'E', km:8,  basePace:'7:30–8:00'},
-    {day:'Sun', date:'2026-06-28', type:'L', km:16, basePace:'7:30–8:00', note:'Practice a sip of water mid-run'}
+  { week:3, phase:'Base', notes:'Last reload week before first cutback.', sessions:[
+    {day:'Tue', date:'2026-06-30', type:'E', km:5, basePace:'7:30–8:30'},
+    {day:'Thu', date:'2026-07-02', type:'E', km:6, basePace:'7:30–8:30'},
+    {day:'Sun', date:'2026-07-05', type:'L', km:8, basePace:'7:30–8:30'}
   ]},
-  { week:4, phase:'Cutback', notes:'Recovery week. Less volume — let the body absorb the work.', sessions:[
-    {day:'Tue', date:'2026-06-30', type:'E', km:5,  basePace:'7:30–8:00'},
-    {day:'Thu', date:'2026-07-02', type:'E', km:6,  basePace:'7:30–8:00'},
-    {day:'Sun', date:'2026-07-05', type:'L', km:12, basePace:'7:30–8:00'}
+  { week:4, phase:'Cutback', notes:'Recovery week. Honest knee check — pain-free? Ready to build. Still sore? Hold here another week.', sessions:[
+    {day:'Tue', date:'2026-07-07', type:'E', km:4, basePace:'7:30–8:30'},
+    {day:'Thu', date:'2026-07-09', type:'E', km:5, basePace:'7:30–8:30'},
+    {day:'Sun', date:'2026-07-12', type:'L', km:6, basePace:'7:30–8:30'}
   ]},
-  { week:5, phase:'Build', notes:'Marathon Pace makes its debut. Short and sweet.', sessions:[
-    {day:'Tue', date:'2026-07-07', type:'E', km:6,  basePace:'7:30–8:00'},
-    {day:'Thu', date:'2026-07-09', type:'MP', km:8, basePace:'5 E + 3 @ 7:30', note:'5 km easy warm-up, then 3 km at marathon pace'},
-    {day:'Sun', date:'2026-07-12', type:'L', km:18, basePace:'7:30–8:00'}
+
+  // Phase 2: PRE-HOLIDAY BASE — push long run higher to bank distance before US trip
+  { week:5, phase:'Base', notes:'Holiday looms in W9. We push long-run progression a touch faster to bank distance before then.', sessions:[
+    {day:'Tue', date:'2026-07-14', type:'E', km:5, basePace:'7:30–8:30'},
+    {day:'Thu', date:'2026-07-16', type:'E', km:7, basePace:'7:30–8:30'},
+    {day:'Sun', date:'2026-07-19', type:'L', km:10, basePace:'7:30–8:30'}
   ]},
-  { week:6, phase:'Build', notes:'Try your first gel on the long run.', sessions:[
-    {day:'Tue', date:'2026-07-14', type:'E', km:7,  basePace:'7:30–8:00'},
-    {day:'Thu', date:'2026-07-16', type:'MP', km:8, basePace:'4 E + 4 @ 7:30'},
-    {day:'Sun', date:'2026-07-19', type:'L', km:20, basePace:'7:30–8:00', note:'Test a carb gel at km 10'}
+  { week:6, phase:'Base', notes:'Long run pushes past 12 km.', sessions:[
+    {day:'Tue', date:'2026-07-21', type:'E', km:5, basePace:'7:30–8:30'},
+    {day:'Thu', date:'2026-07-23', type:'E', km:8, basePace:'7:30–8:30'},
+    {day:'Sun', date:'2026-07-26', type:'L', km:13, basePace:'7:30–8:30', note:'First time at this distance — control pace early'}
   ]},
-  { week:7, phase:'Build', notes:'Long run cracks the half-marathon distance.', sessions:[
-    {day:'Tue', date:'2026-07-21', type:'E', km:7,  basePace:'7:30–8:00'},
-    {day:'Thu', date:'2026-07-23', type:'MP', km:9, basePace:'4 E + 5 @ 7:30'},
-    {day:'Sun', date:'2026-07-26', type:'L', km:22, basePace:'7:30–8:00', note:'Gel at km 10 + km 18'}
+  { week:7, phase:'Base', notes:'Pre-holiday peak. Last big long run before US trip — bank this distance.', sessions:[
+    {day:'Tue', date:'2026-07-28', type:'E', km:6, basePace:'7:30–8:30'},
+    {day:'Thu', date:'2026-07-30', type:'E', km:8, basePace:'7:30–8:30'},
+    {day:'Sun', date:'2026-08-02', type:'L', km:16, basePace:'7:30–8:30', note:'First gel test. Practise fuelling on the go.'}
   ]},
-  { week:8, phase:'Cutback', notes:'Drop volume. Recover deeply.', sessions:[
-    {day:'Tue', date:'2026-07-28', type:'E', km:6,  basePace:'7:30–8:00'},
-    {day:'Thu', date:'2026-07-30', type:'E', km:6,  basePace:'7:30–8:00'},
-    {day:'Sun', date:'2026-08-02', type:'L', km:14, basePace:'7:30–8:00'}
+  { week:8, phase:'Cutback', notes:'Cutback before travel. Pack running shoes!', sessions:[
+    {day:'Tue', date:'2026-08-04', type:'E', km:5, basePace:'7:30–8:30'},
+    {day:'Thu', date:'2026-08-06', type:'E', km:6, basePace:'7:30–8:30'},
+    {day:'Sun', date:'2026-08-09', type:'L', km:11, basePace:'7:30–8:30'}
   ]},
-  { week:9, phase:'Build', notes:'Long run extends past 2 hours.', sessions:[
-    {day:'Tue', date:'2026-08-04', type:'E', km:7,  basePace:'7:30–8:00'},
-    {day:'Thu', date:'2026-08-06', type:'MP', km:9, basePace:'3 E + 6 @ 7:30'},
-    {day:'Sun', date:'2026-08-09', type:'L', km:24, basePace:'7:30–8:00', note:'Gels every 35–40 min'}
+
+  // Phase 3: USA HOLIDAY (Aug 13 → Sep 2) — maintenance mode, 2 sessions/week
+  { week:9, phase:'Travel', notes:'TRAVEL WEEK. Fly to US Thu 13 Aug. Tue is your last home run. Settle in, then one easy US run on the weekend.', sessions:[
+    {day:'Tue', date:'2026-08-11', type:'E', km:5, basePace:'7:30–8:30', note:'Last home run before holiday'},
+    {day:'Sat', date:'2026-08-15', type:'E', km:8, basePace:'7:30–8:30', note:'First US run — explore on foot. Jet lag may slow you; that\'s fine.'}
   ]},
-  { week:10, phase:'Build', notes:'Race rhythm starts to feel familiar.', sessions:[
-    {day:'Tue', date:'2026-08-11', type:'E', km:7,  basePace:'7:30–8:00'},
-    {day:'Thu', date:'2026-08-13', type:'MP', km:10, basePace:'3 E + 7 @ 7:30'},
-    {day:'Sun', date:'2026-08-16', type:'L', km:26, basePace:'7:30–8:00'}
+  { week:10, phase:'Travel', notes:'US HOLIDAY · maintenance. 2 runs to keep the engine warm. Hotel gym treadmill is fine.', sessions:[
+    {day:'Tue', date:'2026-08-18', type:'E', km:7, basePace:'7:30–8:30', note:'Mid-trip mid-week run. Any day works — Tue is just a placeholder.'},
+    {day:'Sun', date:'2026-08-23', type:'L', km:10, basePace:'7:30–8:30', note:'Hold long run capacity. Find a park or trail if possible.'}
   ]},
-  { week:11, phase:'Build', notes:'Big week. Long run includes MP segment at the end.', sessions:[
-    {day:'Tue', date:'2026-08-18', type:'E', km:8,  basePace:'7:30–8:00'},
-    {day:'Thu', date:'2026-08-20', type:'MP', km:10, basePace:'2 E + 8 @ 7:30'},
-    {day:'Sun', date:'2026-08-23', type:'L', km:28, basePace:'24 E + 4 @ 7:30', note:'Finish the last 4 km at MP — feel race fatigue'}
+  { week:11, phase:'Travel', notes:'US HOLIDAY · maintain long-run capacity. Push to 12 km if conditions allow.', sessions:[
+    {day:'Tue', date:'2026-08-25', type:'E', km:6, basePace:'7:30–8:30'},
+    {day:'Sun', date:'2026-08-30', type:'L', km:12, basePace:'7:30–8:30', note:'Try a longer route — riverwalk, park loop. Heat-aware — slow down in US summer.'}
   ]},
-  { week:12, phase:'Cutback', notes:'Recharge before the peak.', sessions:[
-    {day:'Tue', date:'2026-08-25', type:'E', km:6,  basePace:'7:30–8:00'},
-    {day:'Thu', date:'2026-08-27', type:'E', km:7,  basePace:'7:30–8:00'},
-    {day:'Sun', date:'2026-08-30', type:'L', km:18, basePace:'7:30–8:00'}
+  { week:12, phase:'Travel', notes:'Return week. Travel home Wed 2 Sep. Jet lag run Thu, ease back to long Sun.', sessions:[
+    {day:'Tue', date:'2026-09-01', type:'E', km:5, basePace:'7:30–8:30', note:'Last US run — easy shakeout before flight'},
+    {day:'Thu', date:'2026-09-03', type:'E', km:6, basePace:'7:30–8:30', note:'Jet lag friendly — easy effort, listen to body'},
+    {day:'Sun', date:'2026-09-06', type:'L', km:12, basePace:'7:30–8:30', note:'Rejoin the long run. Same distance as last week.'}
   ]},
-  { week:13, phase:'Peak', notes:'Peak training begins. Hardest 3 weeks of the plan.', sessions:[
-    {day:'Tue', date:'2026-09-01', type:'E', km:8,  basePace:'7:30–8:00'},
-    {day:'Thu', date:'2026-09-03', type:'MP', km:10, basePace:'2 E + 8 @ 7:30'},
-    {day:'Sun', date:'2026-09-06', type:'L', km:30, basePace:'25 E + 5 @ 7:30', note:'First 30 km. Walk through aid stations is OK.'}
+
+  // Phase 4: FINAL BUILD — compressed 3-week peak phase (compensating for lost build weeks)
+  { week:13, phase:'Build', notes:'Back home, back to structured training. MP makes its debut.', sessions:[
+    {day:'Tue', date:'2026-09-08', type:'E', km:6, basePace:'7:30–8:30'},
+    {day:'Thu', date:'2026-09-10', type:'MP', km:8, basePace:'6 E + 2 @ 7:30', note:'First MP work. Tiny dose. Test the feel.'},
+    {day:'Sun', date:'2026-09-13', type:'L', km:17, basePace:'7:30–8:30', note:'+5 km on last week. Watch the knee.'}
   ]},
-  { week:14, phase:'Peak', notes:'Peak long run — the marathon rehearsal.', sessions:[
-    {day:'Tue', date:'2026-09-08', type:'E', km:8,  basePace:'7:30–8:00'},
-    {day:'Thu', date:'2026-09-10', type:'MP', km:12, basePace:'2 E + 10 @ 7:30', note:'Hardest MP block — pace memory'},
-    {day:'Sun', date:'2026-09-13', type:'L', km:32, basePace:'24 E + 8 @ 7:30', note:'Race shoes, fueling, breakfast, kit. Dress rehearsal.'}
+  { week:14, phase:'Peak', notes:'Big build week. Long run includes MP at the end.', sessions:[
+    {day:'Tue', date:'2026-09-15', type:'E', km:7, basePace:'7:30–8:30'},
+    {day:'Thu', date:'2026-09-17', type:'MP', km:11, basePace:'5 E + 6 @ 7:30'},
+    {day:'Sun', date:'2026-09-20', type:'L', km:22, basePace:'18 E + 4 @ 7:30', note:'Finish the last 4 km at MP — feel race fatigue'}
   ]},
-  { week:15, phase:'Cutback', notes:'Recovery before the taper begins.', sessions:[
-    {day:'Tue', date:'2026-09-15', type:'E', km:7,  basePace:'7:30–8:00'},
-    {day:'Thu', date:'2026-09-17', type:'E', km:8,  basePace:'7:30–8:00'},
-    {day:'Sun', date:'2026-09-20', type:'L', km:22, basePace:'7:30–8:00', note:'Easy long run — no heroics'}
+  { week:15, phase:'Peak', notes:'PEAK long run — race rehearsal. Hardest single session of the plan.', sessions:[
+    {day:'Tue', date:'2026-09-22', type:'E', km:8, basePace:'7:30–8:30'},
+    {day:'Thu', date:'2026-09-24', type:'MP', km:12, basePace:'4 E + 8 @ 7:30', note:'Hardest MP block — pace memory'},
+    {day:'Sun', date:'2026-09-27', type:'L', km:27, basePace:'21 E + 6 @ 7:30', note:'Race shoes, fueling, breakfast, kit. Dress rehearsal.'}
   ]},
-  { week:16, phase:'Taper', notes:'Taper week 1 — volume drops, intensity holds.', sessions:[
-    {day:'Tue', date:'2026-09-22', type:'E', km:7,  basePace:'7:30–8:00'},
-    {day:'Thu', date:'2026-09-24', type:'MP', km:10, basePace:'4 E + 6 @ 7:30'},
-    {day:'Sun', date:'2026-09-27', type:'L', km:24, basePace:'7:30–8:00'}
+
+  // Phase 5: TAPER
+  { week:16, phase:'Taper', notes:'Taper. Volume drops, intensity holds. Trust the work done.', sessions:[
+    {day:'Tue', date:'2026-09-29', type:'E', km:6, basePace:'7:30–8:30'},
+    {day:'Thu', date:'2026-10-01', type:'MP', km:10, basePace:'4 E + 6 @ 7:30'},
+    {day:'Sun', date:'2026-10-04', type:'L', km:14, basePace:'7:30–8:30', note:'Last "long" run. Stay easy.'}
   ]},
-  { week:17, phase:'Taper', notes:'Taper week 2 — legs feel fresh and twitchy. Trust it.', sessions:[
-    {day:'Tue', date:'2026-09-29', type:'E', km:6,  basePace:'7:30–8:00'},
-    {day:'Thu', date:'2026-10-01', type:'MP', km:7, basePace:'3 E + 4 @ 7:30'},
-    {day:'Sun', date:'2026-10-04', type:'L', km:16, basePace:'7:30–8:00', note:'Last "long" run. Stay easy.'}
-  ]},
-  { week:18, phase:'Race', notes:'RACE WEEK. Sleep, hydrate, carb-load Thu–Sat. Trust the work.', sessions:[
-    {day:'Tue', date:'2026-10-06', type:'E', km:5,  basePace:'7:30–8:00', note:'Easy shakeout'},
+  { week:17, phase:'Race', notes:'RACE WEEK. Sleep, hydrate, carb-load Thu–Sat. Trust the build.', sessions:[
+    {day:'Tue', date:'2026-10-06', type:'E', km:5, basePace:'7:30–8:30', note:'Easy shakeout'},
     {day:'Thu', date:'2026-10-08', type:'MP', km:4, basePace:'2 E + 4×100m strides + 1 E', note:'Sharpener — short MP touches'},
-    {day:'Sat', date:'2026-10-10', type:'E', km:3,  basePace:'7:30–8:00', note:'15-min jog to loosen up'},
-    {day:'Sun', date:'2026-10-11', type:'R', km:42.195, basePace:'7:30 average', note:'RACE DAY · MCG · You\'ve got this'}
+    {day:'Sat', date:'2026-10-10', type:'E', km:3, basePace:'7:30–8:30', note:'15-min jog to loosen up'},
+    {day:'Sun', date:'2026-10-11', type:'R', km:42.195, basePace:'7:30 average', note:'RACE DAY · MCG · You\'ve done the work'}
   ]}
 ];
 PLAN.forEach(w => { w.totalKm = w.sessions.reduce((s,x) => s + x.km, 0); });
@@ -542,16 +661,13 @@ const SEED_RUNS = [
 /* ═════════════════════════════════════════════════════════════
    STORAGE
    ═════════════════════════════════════════════════════════════ */
-const STORAGE_KEY = 'mcg_marathon_tracker_v2';
-function loadState(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return null;
-    const p = JSON.parse(raw);
-    return { runs: p.runs || [], completed: p.completed || {} };
-  } catch(e){ return null; }
+/* ═════════════════════════════════════════════════════════════
+   STATE (in-memory only — persistence via Sheets)
+   ═════════════════════════════════════════════════════════════ */
+function saveState(){
+  // No localStorage. Push directly to Sheets.
+  scheduleSync();
 }
-function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); } catch(e){} }
 function seedInitial(){
   return {
     runs: SEED_RUNS.map(([date, km, duration, type], i) => ({
@@ -562,9 +678,8 @@ function seedInitial(){
     completed: {}
   };
 }
-let STATE = loadState() || seedInitial();
-if(STATE.runs.length === 0) STATE = seedInitial();
-saveState();
+let STATE = { runs: [], completed: {} };
+let DATA_READY = false;  // becomes true after first successful pull from Sheets
 
 /* ═════════════════════════════════════════════════════════════
    HELPERS
@@ -1172,10 +1287,10 @@ function deleteRun(id){
   saveState(); renderAll();
 }
 function resetData(){
-  if(!confirm('Reset ALL data? Logged runs and completions will be erased.\n\nClick OK to reset (will re-seed your pre-plan history). Click Cancel to keep current data.')) return;
+  if(!confirm('Reset ALL data? Your Google Sheet will be wiped and re-seeded with your pre-plan history.\n\nThis cannot be undone (unless you have a Sheets backup).')) return;
   STATE = seedInitial();
   saveState(); renderAll();
-  showToast('Data reset · history re-seeded');
+  showToast('Reset · seed pushed to Sheets');
 }
 function exportCsv(){
   const rows = [['date','type','km','duration_sec','duration_hms','pace_per_km','hr','notes']];
@@ -1271,6 +1386,186 @@ function renderCharts(){
 }
 
 /* ═════════════════════════════════════════════════════════════
+   GOOGLE SHEETS SYNC (hardcoded URL — no localStorage)
+   ═════════════════════════════════════════════════════════════ */
+const SYNC = { url: SHEETS_URL, lastSynced: null, lastError: null };
+let syncInFlight = false;
+let pendingPush = false;  // queue another push if one is in flight
+
+function persistSync(){ /* no-op: URL hardcoded, session ephemeral */ }
+
+function isUrlConfigured(){
+  return SYNC.url && SYNC.url !== 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+}
+
+function setSyncStatus(status, msg){
+  const badge = document.getElementById('sync-badge');
+  const text = document.getElementById('sync-text');
+  const detail = document.getElementById('sync-status-detail');
+  badge.classList.remove('idle','synced','syncing','error','offline');
+  badge.classList.add(status);
+  text.textContent = msg;
+  if(detail){
+    let detailHtml = '';
+    if(status === 'synced') detailHtml = `<span class="ok">●</span> ${msg}`;
+    else if(status === 'error') detailHtml = `<span class="err">●</span> ${msg}`;
+    else detailHtml = msg;
+    if(SYNC.lastSynced) detailHtml += ` · last sync ${new Date(SYNC.lastSynced).toLocaleString('en-AU')}`;
+    detail.innerHTML = detailHtml;
+  }
+}
+
+function refreshSyncBadge(){
+  if(!isUrlConfigured()){ setSyncStatus('error','URL not set in source'); return; }
+  if(!navigator.onLine){ setSyncStatus('offline','Offline'); return; }
+  if(SYNC.lastError){ setSyncStatus('error','Sync error'); return; }
+  if(syncInFlight){ setSyncStatus('syncing','Syncing…'); return; }
+  if(SYNC.lastSynced){
+    const ago = Math.round((Date.now() - SYNC.lastSynced) / 60000);
+    if(ago < 1) setSyncStatus('synced','Synced just now');
+    else if(ago < 60) setSyncStatus('synced',`Synced ${ago}m ago`);
+    else setSyncStatus('synced',`Synced ${Math.round(ago/60)}h ago`);
+  } else {
+    setSyncStatus('idle','Connected · awaiting first sync');
+  }
+}
+
+async function postToSheets(payload){
+  if(!isUrlConfigured()) throw new Error('SHEETS_URL not set in source');
+  const res = await fetch(SYNC.url, {
+    method:'POST',
+    body: JSON.stringify(payload),
+    redirect:'follow'
+  });
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  if(data.error) throw new Error(data.error);
+  return data;
+}
+
+async function getFromSheets(action){
+  if(!isUrlConfigured()) throw new Error('SHEETS_URL not set in source');
+  const url = SYNC.url + '?action=' + encodeURIComponent(action);
+  const res = await fetch(url, {redirect:'follow'});
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  if(data.error) throw new Error(data.error);
+  return data;
+}
+
+async function pushToSheets(showFeedback){
+  if(!isUrlConfigured()) return;
+  if(syncInFlight){ pendingPush = true; return; }
+  syncInFlight = true;
+  setSyncStatus('syncing','Pushing…');
+  try {
+    await postToSheets({ action:'sync', state: STATE });
+    SYNC.lastSynced = Date.now();
+    SYNC.lastError = null;
+    refreshSyncBadge();
+    if(showFeedback) showToast('Pushed ' + STATE.runs.length + ' runs to Sheets');
+  } catch(e){
+    SYNC.lastError = String(e.message || e);
+    setSyncStatus('error', 'Error: ' + SYNC.lastError);
+    if(showFeedback) showToast('Push failed: ' + SYNC.lastError);
+  } finally {
+    syncInFlight = false;
+    // If state changed during the in-flight push, fire another to catch up
+    if(pendingPush){
+      pendingPush = false;
+      setTimeout(() => pushToSheets(false), 100);
+    }
+  }
+}
+
+async function pullFromSheets(showFeedback){
+  if(!isUrlConfigured()) return false;
+  if(syncInFlight) return false;
+  syncInFlight = true;
+  setSyncStatus('syncing','Pulling…');
+  try {
+    const data = await getFromSheets('load');
+    if(data && data.runs){
+      STATE.runs = data.runs.map(r => ({
+        ...r,
+        km: parseFloat(r.km) || 0,
+        duration: parseInt(r.duration) || 0,
+        hr: r.hr ? parseInt(r.hr) : null
+      }));
+      STATE.completed = data.completed || {};
+      DATA_READY = true;
+      SYNC.lastSynced = Date.now();
+      SYNC.lastError = null;
+      refreshSyncBadge();
+      renderAll();
+      if(showFeedback) showToast('Pulled ' + STATE.runs.length + ' runs from Sheets');
+      return true;
+    }
+    return false;
+  } catch(e){
+    SYNC.lastError = String(e.message || e);
+    setSyncStatus('error', 'Error: ' + SYNC.lastError);
+    if(showFeedback) showToast('Pull failed: ' + SYNC.lastError);
+    return false;
+  } finally {
+    syncInFlight = false;
+  }
+}
+
+function scheduleSync(){
+  // No debounce — push immediately. With no localStorage backup, we can't risk losing data.
+  if(!isUrlConfigured()) return;
+  pushToSheets(false);
+}
+
+function manualSync(){
+  if(!isUrlConfigured()){ showToast('SHEETS_URL not set in source'); return; }
+  pushToSheets(true);
+}
+
+function openSettingsModal(){
+  refreshSyncBadge();
+  // Show first/last 20 chars of URL only for visual confirmation
+  const urlPreview = document.getElementById('sync-url-display');
+  if(urlPreview){
+    if(isUrlConfigured()){
+      const u = SYNC.url;
+      urlPreview.textContent = u.length > 50 ? u.slice(0, 40) + '…' + u.slice(-10) : u;
+      urlPreview.classList.remove('not-set');
+    } else {
+      urlPreview.textContent = 'Not set — edit SHEETS_URL constant in HTML source';
+      urlPreview.classList.add('not-set');
+    }
+  }
+  document.getElementById('settings-modal').classList.add('open');
+}
+function closeSettingsModal(){
+  document.getElementById('settings-modal').classList.remove('open');
+}
+
+async function testConnection(){
+  if(!isUrlConfigured()){ showToast('SHEETS_URL not set in source'); return; }
+  setSyncStatus('syncing','Testing…');
+  try {
+    const data = await getFromSheets('ping');
+    if(data && data.ok){
+      SYNC.lastError = null;
+      setSyncStatus('synced','Connection OK · ' + (data.runsInSheet || 0) + ' runs in sheet');
+      showToast('Connection successful');
+    } else {
+      throw new Error('Unexpected response');
+    }
+  } catch(e){
+    SYNC.lastError = String(e.message || e);
+    setSyncStatus('error', 'Test failed: ' + SYNC.lastError);
+    showToast('Test failed — see settings for details');
+  }
+}
+
+window.addEventListener('online', refreshSyncBadge);
+window.addEventListener('offline', refreshSyncBadge);
+
+/* ═════════════════════════════════════════════════════════════
    WIRE UP
    ═════════════════════════════════════════════════════════════ */
 document.querySelectorAll('.tab').forEach(t => {
@@ -1285,6 +1580,7 @@ document.querySelectorAll('.tab').forEach(t => {
 document.getElementById('log-km').addEventListener('input', updatePaceLive);
 document.getElementById('log-duration').addEventListener('input', updatePaceLive);
 document.getElementById('log-modal').addEventListener('click', e => { if(e.target.id === 'log-modal') closeLogModal(); });
+document.getElementById('settings-modal').addEventListener('click', e => { if(e.target.id === 'settings-modal') closeSettingsModal(); });
 
 function renderAll(){
   renderStats();
@@ -1294,7 +1590,84 @@ function renderAll(){
   renderHistory();
   if(document.getElementById('panel-charts').classList.contains('active')) renderCharts();
 }
-renderAll();
+
+/* ═════════════════════════════════════════════════════════════
+   BOOTSTRAP — pure Sheets, no localStorage fallback
+   ═════════════════════════════════════════════════════════════ */
+function showBootError(msg, allowSeed){
+  document.getElementById('boot-spinner').style.display = 'none';
+  document.getElementById('boot-msg').textContent = 'Could not load from Google Sheets.';
+  const err = document.getElementById('boot-error');
+  err.textContent = msg;
+  err.style.display = 'block';
+  const acts = document.getElementById('boot-actions');
+  acts.style.display = 'flex';
+  // Hide seed button unless requested
+  acts.children[1].style.display = allowSeed ? '' : 'none';
+}
+function hideBootOverlay(){
+  document.getElementById('boot-overlay').classList.add('hidden');
+}
+
+async function bootstrap(){
+  // Reset overlay state for retry
+  document.getElementById('boot-spinner').style.display = '';
+  document.getElementById('boot-msg').textContent = 'Loading from Google Sheets…';
+  document.getElementById('boot-error').style.display = 'none';
+  document.getElementById('boot-actions').style.display = 'none';
+
+  if(!isUrlConfigured()){
+    showBootError('SHEETS_URL is not set. Open the HTML file in a text editor and paste your Apps Script /exec URL into the SHEETS_URL constant near the top of the <script> block.', false);
+    return;
+  }
+  if(!navigator.onLine){
+    showBootError('You appear to be offline. The tracker requires a network connection to read/write Google Sheets.', false);
+    return;
+  }
+
+  const ok = await pullFromSheets(false);
+  if(!ok){
+    showBootError('Sheets fetch failed: ' + (SYNC.lastError || 'unknown error'), true);
+    return;
+  }
+
+  // If sheet was empty, offer to seed
+  if(STATE.runs.length === 0){
+    document.getElementById('boot-spinner').style.display = 'none';
+    document.getElementById('boot-msg').textContent = 'Your sheet is empty.';
+    const err = document.getElementById('boot-error');
+    err.style.display = 'block';
+    err.textContent = 'Connected successfully, but no runs found. Seed the sheet with your pre-plan history (29 runs from Mar–May 2026) to enable the adaptive engine, or continue with an empty log.';
+    const acts = document.getElementById('boot-actions');
+    acts.style.display = 'flex';
+    acts.children[0].textContent = 'Continue empty';
+    acts.children[0].onclick = () => { hideBootOverlay(); renderAll(); };
+    acts.children[1].style.display = '';
+    return;
+  }
+
+  hideBootOverlay();
+  renderAll();
+}
+
+async function seedAndContinue(){
+  document.getElementById('boot-spinner').style.display = '';
+  document.getElementById('boot-msg').textContent = 'Seeding pre-plan history to Sheets…';
+  document.getElementById('boot-error').style.display = 'none';
+  document.getElementById('boot-actions').style.display = 'none';
+  STATE = seedInitial();
+  await pushToSheets(false);
+  if(SYNC.lastError){
+    showBootError('Seed failed: ' + SYNC.lastError, true);
+    return;
+  }
+  hideBootOverlay();
+  renderAll();
+}
+
+// Kick off
+refreshSyncBadge();
+bootstrap();
 </script>
 </body>
 </html>
